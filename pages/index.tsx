@@ -1,6 +1,8 @@
 import Head from 'next/head'
+import { useEffect, useState } from 'react'
 import Character from '../components/Character'
-import axios from 'axios'
+import {getCharacters, logout} from '../services'
+import {useAuth} from '../hooks'
 
 type Character = {
   id: number
@@ -9,7 +11,22 @@ type Character = {
   likes: number
 }
 
-export default function Home({data}: {data: Character[]}) {
+export default function Home() {
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const user = useAuth();
+  
+  useEffect(() => {
+    (async () => {
+      const { data } = await getCharacters();
+      setCharacters(data);
+    })();
+  }, []);
+
+  const logoutHandler = async () => {
+    await logout();
+    window.location.reload();
+  }
+
   return (
     <div>
       <Head>
@@ -19,10 +36,20 @@ export default function Home({data}: {data: Character[]}) {
       </Head>
 
       <main className='flex justify-center items-center pt-4 flex-col'>
-        <h1 className='text-white text-center text-4xl mb-10'>God of war - Ragnarök!</h1>
+        <div className='flex justify-between items-center w-full mb-10 px-10'>
+          <div></div>
+          <h1 className='text-white text-center text-4xl'>God of war - Ragnarök!</h1>
+           {user 
+              ? (<div>
+                  <a href='/admin' className='text-white hover:text-purple-400 mr-4' >Admin</a>
+                <button className='text-white hover:text-purple-400' onClick={logoutHandler}>Logout</button>
+              </div>)
+              : <a href='/login' className='text-white hover:text-purple-400' >Login</a>
+            }
+        </div>
         <div className='grid grid-cols-2 gap-10 pb-10'>
           {
-            data.map(({id, name, image, likes}) => (
+            characters.map(({id, name, image, likes}) => (
               <Character key={id} name={name} image={image} likes={likes} />
             )) 
           }
@@ -30,13 +57,4 @@ export default function Home({data}: {data: Character[]}) {
       </main>
     </div>
   )
-}
-
-export async function getServerSideProps() {
-  const { data } = await axios.get(`${process.env.APP_URL}/characters`)
-  return {
-    props: {
-      data,
-    },
-  };
 }
