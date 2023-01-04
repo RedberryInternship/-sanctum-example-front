@@ -1,31 +1,29 @@
-import {useRouter} from 'next/router'
+import { hasCookie } from 'cookies-next';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { me } from '../services'
+import { me } from '../services';
 
 const useAuth = () => {
-    const router = useRouter();
-    const [user, setUser] = useState(null)
+  const router = useRouter();
+  const [user, setUser] = useState(null);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const response = await me();
-                setUser(response.data.user);
-
-                if(router.pathname === '/login') {
-                    router.push('/');
-                }
-            } catch(error) {
-                if(router.pathname === '/admin')
-                {
-                    router.push('/login');
-                }
-            }
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await me();
+        setUser(response.data.user);
+      } catch (error) {
+        if (router.pathname === '/admin') {
+          router.push('/login');
         }
-        checkAuth();
-    }, [router]);
+      }
+    };
+    if (hasCookie('XSRF-TOKEN')) {
+      checkAuth();
+    }
+  }, [router]);
 
-    return user;
-}
+  return user;
+};
 
 export default useAuth;
